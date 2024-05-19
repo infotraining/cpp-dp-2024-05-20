@@ -111,6 +111,7 @@ public:
     }
 };
 
+// "ConcreteCreatorC"
 class FsMusicServiceCreator : public MusicServiceCreator
 {
     std::string path_;
