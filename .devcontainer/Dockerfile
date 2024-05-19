@@ -1,4 +1,4 @@
-FROM infotrainingdev/gcc13-cmake327-vcpkg-boost:latest
+FROM infotrainingdev/gcc13-cmake328-vcpkg-boost:latest
 
 WORKDIR /root
 
