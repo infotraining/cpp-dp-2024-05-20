@@ -5,11 +5,9 @@
 using namespace std;
 using namespace Drawing;
 
-namespace
-{
-    bool is_registered = SingletonShapeFactory::instance()
+
+static bool is_registered = SingletonShapeFactory::instance()
                              .register_creator(Square::id, [] { return make_unique<Square>(); });
-}
 
 Square::Square(int x, int y, int size)
     : rect_{x, y, size, size}
