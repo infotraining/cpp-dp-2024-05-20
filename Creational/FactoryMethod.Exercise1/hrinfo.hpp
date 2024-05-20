@@ -1,18 +1,7 @@
 #ifndef HRINFO_HPP_
 #define HRINFO_HPP_
 
-#include "employee.hpp"
-
-class HRInfo
-{
-protected:
-	const Employee* employee_;
-public:
-	HRInfo(const Employee* e);
-    virtual ~HRInfo() = default;
-
-	virtual void info() const = 0;
-};
+#include "hrinfo_interface.hpp"
 
 class StdInfo : public HRInfo
 {

@@ -123,4 +123,14 @@ int main()
     std::string id_from_config = "Spotify";
     ModernCpp::MusicApp app(music_service_factory.at(id_from_config));
     app.play("Would?");
+
+    //////////////////////////////
+
+    std::list<int> vec = {1, 2, 3};
+
+    for(auto it = vec.begin(); it != vec.end(); ++it)
+    {
+        const auto& item = *it;
+        std::cout << item << " ";
+    }
 }
