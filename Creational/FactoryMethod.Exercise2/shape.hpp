@@ -13,6 +13,9 @@ namespace Drawing
         virtual ~Shape() = default;
         virtual void move(int dx, int dy) = 0;
         virtual void draw() const = 0;
+
+        // virtual void read(std::istream&) = 0;
+        // virtual void write(std::istream&) = 0; 
     };
 
     class ShapeBase : public Shape
