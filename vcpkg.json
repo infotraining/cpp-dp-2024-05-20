@@ -1,9 +1,0 @@
-{
-    "name": "vcpkg-manifest-mode",
-    "version-string": "0.0.1",
-    "dependencies": [
-        "catch2",
-        "bext-di",
-        "gtest"
-    ]
-}
