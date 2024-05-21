@@ -18,13 +18,11 @@ using namespace Drawing::IO;
 class GraphicsDoc
 {
     ShapeGroup shapes_;
-    ShapeFactory& shape_factory_;
     ShapeRWFactory& shape_rw_factory_;
 
 public:
-    GraphicsDoc(ShapeFactory& shape_factory, ShapeRWFactory& shape_rw_factory)
-        : shape_factory_{shape_factory}
-        , shape_rw_factory_{shape_rw_factory}
+    GraphicsDoc(ShapeRWFactory& shape_rw_factory)
+        : shape_rw_factory_{shape_rw_factory}
     {
     }
 
@@ -73,7 +71,7 @@ int main()
 {
     cout << "Start..." << endl;
 
-    GraphicsDoc doc(SingletonShapeFactory::instance(), SingletonShapeRWFactory::instance());
+    GraphicsDoc doc(SingletonShapeRWFactory::instance());
 
     doc.load("drawing_composite.txt");
 
