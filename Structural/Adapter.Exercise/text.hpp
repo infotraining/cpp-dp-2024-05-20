@@ -8,7 +8,6 @@
 
 namespace Drawing
 {
-    // TODO - adapt Paragraph class to Shape interface
     class Text : public ShapeBase, private LegacyCode::Paragraph
     {
     public:

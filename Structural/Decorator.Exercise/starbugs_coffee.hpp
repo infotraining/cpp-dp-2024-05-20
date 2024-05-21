@@ -20,7 +20,9 @@ class CoffeeBase : public Coffee
     std::string description_;
 
 public:
-    CoffeeBase(float price, const std::string& description) : price_{price}, description_{description}
+    CoffeeBase(float price, const std::string& description)
+        : price_{price}
+        , description_{description}
     {
     }
 
@@ -35,6 +37,70 @@ public:
     }
 };
 
+class DecoratedCoffee : public Coffee
+{
+    std::unique_ptr<Coffee> m_coffee;
+
+public:
+    explicit DecoratedCoffee(std::unique_ptr<Coffee> coffeeSp)
+        : m_coffee(std::move(coffeeSp))
+    {
+    }
+
+protected:
+    Coffee& coffee() { return *m_coffee; }
+    const Coffee& coffee() const { return *m_coffee; }
+};
+
+class Whipped : public DecoratedCoffee
+{
+public:
+    Whipped(std::unique_ptr<Coffee> coffeeSp)
+        : DecoratedCoffee(std::move(coffeeSp))
+    {
+    }
+
+    float get_total_price() const override
+    {
+        return coffee().get_total_price() + 2.5;
+    }
+
+    std::string get_description() const override
+    {
+        return std::string{"Whipped "} + coffee().get_description();
+    };
+
+    void prepare() override
+    {
+        coffee().prepare();
+        std::cout << "Adding whipped cream...\n";
+    }
+};
+
+class Whisky : public DecoratedCoffee
+{
+public:
+    Whisky(std::unique_ptr<Coffee> coffeeSp)
+        : DecoratedCoffee(std::move(coffeeSp))
+    {
+    }
+
+    float get_total_price() const override
+    {
+        return coffee().get_total_price() + 6.0;
+    }
+    std::string get_description() const override
+    {
+        return std::string{"Whisky "} + coffee().get_description();
+    };
+
+    void prepare() override
+    {
+        coffee().prepare();
+        std::cout << "Pouring good whisky\n";
+    }
+};
+
 class Espresso : public CoffeeBase
 {
 public:
@@ -46,6 +112,33 @@ public:
     void prepare() override
     {
         std::cout << "Making a perfect espresso: 7 g, 15 bar and 24 sec.\n";
+    }
+};
+
+class ExtraEspresso : public DecoratedCoffee
+{
+    Espresso espresso_;
+
+public:
+    ExtraEspresso(std::unique_ptr<Coffee> coffeeSp)
+        : DecoratedCoffee(std::move(coffeeSp))
+    {
+    }
+
+    float get_total_price() const override
+    {
+        return coffee().get_total_price() + espresso_.get_total_price();
+    }
+
+    std::string get_description() const override
+    {
+        return std::string{"ExtraEspressso "} + coffee().get_description();
+    };
+
+    void prepare() override
+    {
+        coffee().prepare();
+        espresso_.prepare();
     }
 };
 
@@ -79,6 +172,6 @@ public:
 
 // TO DO: Condiments: Whipped: 2.5$, Whisky: 6.0$, ExtraEspresso: 4.0$
 
-// TO DO: Add CoffeeDecorator and concrete decorators for condiments 
+// TO DO: Add CoffeeDecorator and concrete decorators for condiments
 
 #endif /*COFFEEHELL_HPP_*/
