@@ -38,6 +38,22 @@ public:
     virtual void calculate(const Data& data, Results& outResults) = 0;
 };
 
+class StatisticsGroup : public CalculationStrategy // Composite 
+{
+    std::vector<std::shared_ptr<CalculationStrategy>> stats_;
+public:
+    void calculate(const Data& data, Results& outResults) override
+    {
+        for(auto stat : stats_)
+            stat->calculate(data, outResults);
+    }
+
+    void add(std::shared_ptr<CalculationStrategy> stat)
+    {
+        stats_.push_back(stat);
+    }
+};
+
 class AvgCalculationStrategy : public CalculationStrategy
 {
 public:
@@ -126,15 +142,15 @@ namespace StdFunction
     class DataAnalyzer
     {
     public:
-        using AnalyzeStragety = std::function<Results(const Data&)>;
+        using AnalyzeStrategy = std::function<Results(const Data&)>;
 
     private:
-        AnalyzeStragety strategy_;
+        AnalyzeStrategy strategy_;
         Data data_;
         Results results_;
 
     public:
-        DataAnalyzer(AnalyzeStragety strategy)
+        DataAnalyzer(AnalyzeStrategy strategy)
             : strategy_(std::move(strategy))
         {
         }
@@ -157,7 +173,7 @@ namespace StdFunction
             std::cout << "File " << file_name << " has been loaded...\n";
         }
 
-        void set_statistics(AnalyzeStragety strategy)
+        void set_statistics(AnalyzeStrategy strategy)
         {
             strategy_ = std::move(strategy);
         }
@@ -179,12 +195,12 @@ void show_results(const Results& results)
         std::cout << rslt.description << " = " << rslt.value << std::endl;
 }
 
-int alternative_main()
+void alternative_main()
 {
     auto avg = [](const Data& data) -> Results
     {
         return Results{StatResult{
-            "Avg", std::accumulate(data.begin(), data.end(), 0) / data.size()}};
+            "Avg", std::accumulate(data.begin(), data.end(), 0.0) / data.size()}};
     };
 
     auto min_max = [](const Data& data) -> Results
@@ -198,7 +214,7 @@ int alternative_main()
     auto sum = [](const Data& data) -> Results
     {
         return Results{
-            StatResult("min", std::accumulate(data.begin(), data.end(), 0))};
+            StatResult("min", std::accumulate(data.begin(), data.end(), 0.0))};
     };
     
     StdFunction::DataAnalyzer da{avg};
@@ -228,15 +244,20 @@ int main()
     auto min_max = std::make_shared<MinMaxCalculationStrategy>();
     auto sum = std::make_shared<SumCalculationStrategy>();
 
-    DataAnalyzer da{avg};
+    auto std_stats = std::make_shared<StatisticsGroup>();
+    std_stats->add(avg);
+    std_stats->add(min_max);
+    std_stats->add(sum);
+
+    DataAnalyzer da{std_stats};
     da.load_data("stats_data.dat");
     da.calculate();
 
-    da.set_calculation_strategy(min_max);
-    da.calculate();
+    // da.set_calculation_strategy(min_max);
+    // da.calculate();
 
-    da.set_calculation_strategy(sum);
-    da.calculate();
+    // da.set_calculation_strategy(sum);
+    // da.calculate();
 
     show_results(da.results());
 

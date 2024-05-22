@@ -1,5 +1,9 @@
 # Szkolenie - Wzorce projektowe w C++ #
 
+## Ankieta 
+
+* https://forms.gle/RBPiwR8MuTVNH5YV9
+
 ## Dokumentacja + slajdy
 
 * https://infotraining.bitbucket.io/cpp-dp

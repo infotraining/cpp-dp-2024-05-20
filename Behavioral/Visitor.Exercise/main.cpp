@@ -19,5 +19,5 @@ int main()
     // PrintingVisitor printer;
     // expr->accept(printer);
 
-    // cout << printer.str() << " = " << evaluator.result() << std::endl;
+    cout << "Result: " << evaluator.result() << std::endl;
 }
