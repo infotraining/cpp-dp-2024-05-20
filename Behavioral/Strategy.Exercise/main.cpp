@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -23,22 +24,66 @@ struct StatResult
 using Data = std::vector<double>;
 using Results = std::vector<StatResult>;
 
-enum StatisticsType
+// enum StatisticsType
+// {
+//     avg,
+//     min_max,
+//     sum
+// };
+
+class CalculationStrategy
 {
-    avg,
-    min_max,
-    sum
+public:
+    virtual ~CalculationStrategy() = default;
+    virtual void calculate(const Data& data, Results& outResults) = 0;
+};
+
+class AvgCalculationStrategy : public CalculationStrategy
+{
+public:
+    void calculate(const Data& data, Results& outResults) override
+    {
+        double sum = std::accumulate(data.begin(), data.end(), 0.0);
+        double avg = sum / data.size();
+
+        StatResult result("Avg", avg);
+        outResults.push_back(result);
+    }
+};
+
+class MinMaxCalculationStrategy : public CalculationStrategy
+{
+public:
+    void calculate(const Data& data, Results& outResults) override
+    {
+        double min = *(std::min_element(data.begin(), data.end()));
+        double max = *(std::max_element(data.begin(), data.end()));
+
+        outResults.push_back(StatResult("Min", min));
+        outResults.push_back(StatResult("Max", max));
+    }
+};
+
+class SumCalculationStrategy : public CalculationStrategy
+{
+public:
+    void calculate(const Data& data, Results& outResults) override
+    {
+        double sum = std::accumulate(data.begin(), data.end(), 0.0);
+
+        outResults.push_back(StatResult("Sum", sum));
+    }
 };
 
 class DataAnalyzer
 {
-    StatisticsType stat_type_;
     Data data_;
     Results results_;
+    std::shared_ptr<CalculationStrategy> calculation_strategy_;
 
 public:
-    DataAnalyzer(StatisticsType stat_type)
-        : stat_type_{stat_type}
+    DataAnalyzer(std::shared_ptr<CalculationStrategy> calculationStrategy)
+        : calculation_strategy_{calculationStrategy}
     {
     }
 
@@ -60,35 +105,14 @@ public:
         std::cout << "File " << file_name << " has been loaded...\n";
     }
 
-    void set_statistics(StatisticsType stat_type)
+    void set_calculation_strategy(std::shared_ptr<CalculationStrategy> calculationStrategy)
     {
-        stat_type_ = stat_type;
+        calculation_strategy_ = calculationStrategy;
     }
 
     void calculate()
     {
-        if (stat_type_ == avg)
-        {
-            double sum = std::accumulate(data_.begin(), data_.end(), 0.0);
-            double avg = sum / data_.size();
-
-            StatResult result("Avg", avg);
-            results_.push_back(result);
-        }
-        else if (stat_type_ == min_max)
-        {
-            double min = *(std::min_element(data_.begin(), data_.end()));
-            double max = *(std::max_element(data_.begin(), data_.end()));
-
-            results_.push_back(StatResult("Min", min));
-            results_.push_back(StatResult("Max", max));
-        }
-        else if (stat_type_ == sum)
-        {
-            double sum = std::accumulate(data_.begin(), data_.end(), 0.0);
-
-            results_.push_back(StatResult("Sum", sum));
-        }
+        calculation_strategy_->calculate(data_, results_);
     }
 
     const Results& results() const
@@ -97,15 +121,87 @@ public:
     }
 };
 
+namespace StdFunction
+{
+    class DataAnalyzer
+    {
+    public:
+        using AnalyzeStragety = std::function<Results(const Data&)>;
+
+    private:
+        AnalyzeStragety strategy_;
+        Data data_;
+        Results results_;
+
+    public:
+        DataAnalyzer(AnalyzeStragety strategy)
+            : strategy_(std::move(strategy))
+        {
+        }
+
+        void load_data(const std::string& file_name)
+        {
+            data_.clear();
+            results_.clear();
+
+            std::ifstream fin(file_name.c_str());
+            if (!fin)
+                throw std::runtime_error("File not opened");
+
+            double d;
+            while (fin >> d)
+            {
+                data_.push_back(d);
+            }
+
+            std::cout << "File " << file_name << " has been loaded...\n";
+        }
+
+        void set_statistics(AnalyzeStragety strategy)
+        {
+            strategy_ = std::move(strategy);
+        }
+
+        void calculate()
+        {
+            auto newResults = strategy_(data_);
+            std::move(newResults.begin(), newResults.end(),
+                std::back_inserter(results_));
+        }
+
+        const Results& results() const { return results_; }
+    };
+}
+
 void show_results(const Results& results)
 {
     for (const auto& rslt : results)
         std::cout << rslt.description << " = " << rslt.value << std::endl;
 }
 
-int main()
+int alternative_main()
 {
-    DataAnalyzer da{avg};
+    auto avg = [](const Data& data) -> Results
+    {
+        return Results{StatResult{
+            "Avg", std::accumulate(data.begin(), data.end(), 0) / data.size()}};
+    };
+
+    auto min_max = [](const Data& data) -> Results
+    {
+        double min = *std::min_element(data.begin(), data.end());
+        double max = *std::max_element(data.begin(), data.end());
+        return Results{
+            StatResult("min", min), StatResult("max", max)};
+    };
+
+    auto sum = [](const Data& data) -> Results
+    {
+        return Results{
+            StatResult("min", std::accumulate(data.begin(), data.end(), 0))};
+    };
+    
+    StdFunction::DataAnalyzer da{avg};
     da.load_data("stats_data.dat");
 
     da.calculate();
@@ -114,6 +210,32 @@ int main()
     da.calculate();
 
     da.set_statistics(sum);
+    da.calculate();
+
+    show_results(da.results());
+
+    std::cout << "\n\n";
+
+    da.load_data("new_stats_data.dat");
+    da.calculate();
+
+    show_results(da.results());
+}
+
+int main()
+{
+    auto avg = std::make_shared<AvgCalculationStrategy>();
+    auto min_max = std::make_shared<MinMaxCalculationStrategy>();
+    auto sum = std::make_shared<SumCalculationStrategy>();
+
+    DataAnalyzer da{avg};
+    da.load_data("stats_data.dat");
+    da.calculate();
+
+    da.set_calculation_strategy(min_max);
+    da.calculate();
+
+    da.set_calculation_strategy(sum);
     da.calculate();
 
     show_results(da.results());

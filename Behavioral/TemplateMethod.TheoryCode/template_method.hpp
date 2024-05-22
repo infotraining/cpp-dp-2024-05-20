@@ -55,7 +55,7 @@ protected:
     }
 
 public:
-    bool login(const User& user)
+    bool login(const User& user) // template method
     {
         Code code = generate_secret_code();
 

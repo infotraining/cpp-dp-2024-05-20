@@ -8,8 +8,8 @@
 
 class Bitmap
 {
-    char* image_;
-    size_t size_;
+    struct Implementation;
+    std::unique_ptr<Implementation> pimpl_;
 
 public:
     Bitmap(size_t size, char fill_char = '*');
